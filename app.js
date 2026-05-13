@@ -39,10 +39,10 @@ const TRANSLATIONS = {
         ],
         tutorIntro: "Hola, pregúntame sobre cualquier parte técnica del sistema.",
         paths: {
-            info: "../../Contenido de apoyo del grupo/Infografía en Español.png",
-            pdf: "../../Contenido de apoyo del grupo/Telemetría_Térmica_PWM-IR.pdf",
-            audio: "../../Contenido de apoyo del grupo/Control_de_calderas_con_luz_infrarroja.m4a",
-            video: "../../Contenido de apoyo del grupo/Telemetría_Térmica_PWM-IR.mp4"
+            info: "./Contenido de apoyo del grupo/Infografía en Español.png",
+            pdf: "./Contenido de apoyo del grupo/Telemetría_Térmica_PWM-IR.pdf",
+            audio: "./Contenido de apoyo del grupo/Control_de_calderas_con_luz_infrarroja.m4a",
+            video: "./Contenido de apoyo del grupo/Telemetría_Térmica_PWM-IR.mp4"
         }
     },
     en: {
@@ -72,10 +72,10 @@ const TRANSLATIONS = {
         ],
         tutorIntro: "Hello, ask me about any technical part of the system.",
         paths: {
-            info: "../../Contenido de apoyo del grupo/Infografía en Inglés.png",
-            pdf: "../../Contenido de apoyo del grupo/PWM-IR_Telemetry_Architecture.pdf",
-            audio: "../../Contenido de apoyo del grupo/Replacing_Copper_Wires_With_Infrared_Light.m4a",
-            video: "../../Contenido de apoyo del grupo/Thermal_Telemetry_System.mp4"
+            info: "./Contenido de apoyo del grupo/Infografía en Inglés.png",
+            pdf: "./Contenido de apoyo del grupo/PWM-IR_Telemetry_Architecture.pdf",
+            audio: "./Contenido de apoyo del grupo/Replacing_Copper_Wires_With_Infrared_Light.m4a",
+            video: "./Contenido de apoyo del grupo/Thermal_Telemetry_System.mp4"
         }
     }
 };
