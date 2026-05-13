@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 3: Estación de Telemetría Térmica V2 | Rigoberto</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+</head>
+<body data-lang="es">
+    <header>
+        <div class="container">
+            <h1 id="title-main">Telemetría Térmica & Control PWM-IR</h1>
+            <p id="title-sub">Laboratorio #3: Diseño con Op-Amps</p>
+            <button onclick="toggleLanguage()" id="lang-btn">ES | EN</button>
+            <div class="badge" id="badge-authors">Electrónica Análoga - Simón Barrera R., Laura Guerrero R., Karen Marulanda C.</div>
+        </div>
+    </header>
+
+    <section class="context-section">
+        <div class="container">
+            <div class="context-card">
+                <h2 id="ctx-title">Objetivo del Laboratorio</h2>
+                <p id="ctx-desc-1">Esta simulación representa un sistema industrial de monitoreo inalámbrico. El objetivo es procesar la temperatura de dos puntos (RTD y LM35), promediarlos y transmitir ese dato mediante <b>telemetría óptica (Infrarrojos)</b> usando modulación por ancho de pulso (PWM). En el receptor, recuperamos el voltaje original para controlar un extractor de calor y un semáforo de alerta térmica.</p>
+                <p class="hint"><i id="ctx-hint">Dato Técnico:</i> <span id="ctx-hint-desc">El "Ruido Óptico" simula la interferencia de luz externa que afecta la calidad de los datos recibidos.</span></p>
+            </div>
+        </div>
+    </section>
+
+    <main class="container">
+        <div class="main-layout">
+            <div class="card tx-card">
+                <div class="card-header" id="label-tx">TRANSMISIÓN (TX)</div>
+                <div class="ctrl-group">
+                    <label id="label-rtd">RTD (Pt100)</label>
+                    <input type="range" id="temp-rtd" min="20" max="50" step="0.1" value="25" oninput="updateSystem()">
+                    <div class="val-display"><span id="val-rtd">25.0</span> °C</div>
+                </div>
+                <div class="ctrl-group">
+                    <label id="label-lm35">Sensor Analógico (LM35)</label>
+                    <input type="range" id="temp-lm35" min="20" max="50" step="0.1" value="30" oninput="updateSystem()">
+                    <div class="val-display"><span id="val-lm35">30.0</span> °C</div>
+                </div>
+                <div class="divider"></div>
+                <div class="ctrl-group">
+                    <label id="label-freq">Frecuencia Portadora</label>
+                    <input type="range" id="freq-tri" min="50" max="500" step="1" value="100" oninput="updateSystem()">
+                    <div class="val-display"><span id="val-freq">100</span> Hz</div>
+                </div>
+                <div class="ctrl-group">
+                    <label id="label-volt">Voltaje Rampa (Vpp)</label>
+                    <input type="range" id="volt-tri" min="0.1" max="10" step="0.1" value="6.0" oninput="updateSystem()">
+                    <div class="val-display"><span id="val-volt">6.0</span> V</div>
+                </div>
+                <button class="btn-autoset" id="btn-autoset" onclick="autoset()">AUTOSET SISTEMA</button>
+            </div>
+
+            <div class="center-module">
+                <div class="digital-display">
+                    <div class="segment-label" id="label-avg-temp">TEMPERATURA PROMEDIO (°C)</div>
+                    <div class="seven-segment" id="temp-display">27.5</div>
+                </div>
+                <div class="ir-link">
+                    <div class="ir-device emitter">TX</div>
+                    <div class="ir-beam"><div class="photon-wave" id="photon-wave"></div></div>
+                    <div class="ir-device receiver">RX</div>
+                </div>
+                <div class="noise-box">
+                    <label id="label-noise">Interferencia Óptica (Ruido)</label>
+                    <input type="range" id="opt-noise" min="0" max="1" step="0.01" value="0.05" oninput="updateSystem()">
+                </div>
+            </div>
+
+            <div class="card rx-card">
+                <div class="card-header" id="label-rx">RECEPCIÓN Y CONTROL (RX)</div>
+                <div class="fan-container">
+                    <div class="fan-motor" id="fan-motor">
+                        <svg class="fan-blades" viewBox="0 0 100 100">
+                            <path fill="#2c3e50" d="M50 50 L50 5 A20 20 0 0 1 90 5 L50 50 Z" />
+                            <path fill="#2c3e50" d="M50 50 L95 50 A20 20 0 0 1 95 90 L50 50 Z" />
+                            <path fill="#2c3e50" d="M50 50 L50 95 A20 20 0 0 1 10 95 L50 50 Z" />
+                            <path fill="#2c3e50" d="M50 50 L5 50 A20 20 0 0 1 5 10 L50 50 Z" />
+                            <circle fill="#34495e" cx="50" cy="50" r="10" />
+                        </svg>
+                    </div>
+                    <div class="fan-label"><span id="label-fan">EXTRACTOR</span>: <span id="fan-power">0%</span></div>
+                </div>
+                <div class="led-strip">
+                    <div class="led-indicator" id="led-blue">AZUL</div>
+                    <div class="led-indicator" id="led-green">VERDE</div>
+                    <div class="led-indicator" id="led-red">ROJO</div>
+                </div>
+                <div class="recovery-meter">
+                    <div class="m-label" id="label-vrec">V_RECUPERADO (POST-FILTRO)</div>
+                    <div class="m-value" id="val-vrec">2.75 V</div>
+                    <div class="m-bar"><div id="bar-vrec" class="m-fill"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-layout">
+            <div class="analysis-panel">
+                <h3 class="panel-title-dark" id="label-analysis">Análisis de la Cadena</h3>
+                <div class="analysis-content" id="analysis-text"></div>
+            </div>
+            <div class="scope-panel">
+                <div class="scope-header">
+                    <span class="neon-text" id="label-scope">OSCILOSCOPIO TX (PWM) vs RX (REC)</span>
+                    <button id="pause-btn" onclick="togglePause()">PAUSAR</button>
+                </div>
+                <canvas id="oscilloscope"></canvas>
+            </div>
+            <div class="tutor-card">
+                <div class="tutor-header" id="label-tutor">PREGUNTA A RIGOBERTO</div>
+                <div id="chat-box" class="chat-area"><p id="tutor-intro"></p></div>
+                <div class="chat-input-row">
+                    <input type="text" id="user-input" placeholder="...">
+                    <button onclick="askRigoberto()">&#10148;</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CENTRO MULTIMEDIA MOSAICO -->
+        <section class="support-section">
+            <div class="container">
+                <h2 class="support-title" id="support-main-title">Centro Multimedia del Grupo</h2>
+                <div class="support-grid">
+                    
+                    <!-- INFOGRAFÍA (GRANDE 2x2) -->
+                    <div class="support-card card-info">
+                        <h3 id="sup-info-title"></h3>
+                        <div class="media-frame">
+                            <img id="sup-info-img" src="" alt="Infografía">
+                        </div>
+                        <div class="card-actions">
+                            <a id="sup-info-dl" href="#" download class="btn-action dl-btn">💾 Descargar</a>
+                        </div>
+                    </div>
+
+                    <!-- PRESENTACIÓN -->
+                    <div class="support-card card-doc">
+                        <h3 id="sup-pdf-title"></h3>
+                        <div class="doc-preview">
+                            <div class="doc-icon">📄</div>
+                            <p id="sup-pdf-desc"></p>
+                        </div>
+                        <div class="card-actions">
+                            <a id="sup-pdf-link" href="#" target="_blank" class="btn-action view-btn">👁️ Ver</a>
+                            <a id="sup-pdf-dl" href="#" download class="btn-action dl-btn">💾</a>
+                        </div>
+                    </div>
+
+                    <!-- PODCAST -->
+                    <div class="support-card card-audio">
+                        <h3 id="sup-audio-title"></h3>
+                        <div class="audio-box">
+                            <div class="audio-icon">🎙️</div>
+                            <audio id="sup-audio-player" controls></audio>
+                        </div>
+                        <div class="card-actions">
+                            <a id="sup-audio-dl" href="#" download class="btn-action dl-btn">💾 Descargar</a>
+                        </div>
+                    </div>
+
+                    <!-- VIDEO (ANCHO COMPLETO) -->
+                    <div class="support-card card-video">
+                        <h3 id="sup-video-title"></h3>
+                        <div class="media-frame">
+                            <video id="sup-video-player" controls poster=""></video>
+                        </div>
+                        <div class="card-actions">
+                            <a id="sup-video-dl" href="#" download class="btn-action dl-btn">💾 Descargar Video</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
