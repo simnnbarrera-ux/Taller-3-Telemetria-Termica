@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 3: Estación de Telemetría Térmica V2.2 | Rigoberto</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Telemetría Térmica & Control PWM-IR</h1>
+            <p>Laboratorio #3: Diseño con Op-Amps</p>
+            <div class="badge">Proteus Premium V12 — Ingeniería UAO</div>
+        </div>
+    </header>
+
+    <!-- NUEVO APARTADO DE CONTEXTUALIZACIÓN -->
+    <section class="context-section">
+        <div class="container">
+            <div class="context-card">
+                <h2>Objetivo del Laboratorio</h2>
+                <p>Esta simulación representa un sistema industrial de monitoreo inalámbrico. El objetivo es procesar la temperatura de dos puntos (RTD y LM35), promediarlos y transmitir ese dato mediante <b>telemetría óptica (Infrarrojos)</b> usando modulación por ancho de pulso (PWM). En el receptor, recuperamos el voltaje original para controlar un extractor de calor y un semáforo de alerta térmica.</p>
+                <p class="hint"><i>Dato Técnico:</i> El "Ruido Óptico" simula la interferencia de luz externa que afecta la calidad de los datos recibidos.</p>
+            </div>
+        </div>
+    </section>
+
+    <main class="container">
+        <!-- Dashboard Principal -->
+        <div class="main-layout">
+            
+            <!-- PANEL TX -->
+            <div class="card tx-card">
+                <div class="card-header">TRANSMISIÓN (TX)</div>
+                
+                <div class="ctrl-group">
+                    <label>RTD (Pt100)</label>
+                    <input type="range" id="temp-rtd" min="20" max="50" step="0.1" value="25" oninput="updateSystem()">
+                    <div class="val-display"><span id="val-rtd">25.0</span> °C</div>
+                </div>
+                <div class="ctrl-group">
+                    <label>Analog Sensor (LM35)</label>
+                    <input type="range" id="temp-lm35" min="20" max="50" step="0.1" value="30" oninput="updateSystem()">
+                    <div class="val-display"><span id="val-lm35">30.0</span> °C</div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="ctrl-group">
+                    <label>Frecuencia Portadora</label>
+                    <input type="range" id="freq-tri" min="50" max="500" step="1" value="100" oninput="updateSystem()">
+                    <div class="val-display"><span id="val-freq">100</span> Hz</div>
+                </div>
+                <div class="ctrl-group">
+                    <label>Voltaje Rampa (Vpp)</label>
+                    <input type="range" id="volt-tri" min="0.1" max="10" step="0.1" value="6.0" oninput="updateSystem()">
+                    <div class="val-display"><span id="val-volt">6.0</span> V</div>
+                </div>
+                <button class="btn-autoset" onclick="autoset()">AUTOSET SISTEMA</button>
+            </div>
+
+            <!-- ENLACE IR Y DISPLAY 7-SEG -->
+            <div class="center-module">
+                <!-- 7 SEGMENT DISPLAY -->
+                <div class="digital-display">
+                    <div class="segment-label">TEMPERATURA PROMEDIO (°C)</div>
+                    <div class="seven-segment" id="temp-display">27.5</div>
+                </div>
+
+                <div class="ir-link">
+                    <div class="ir-device emitter">TX</div>
+                    <div class="ir-beam">
+                        <div class="photon-wave" id="photon-wave"></div>
+                    </div>
+                    <div class="ir-device receiver">RX</div>
+                </div>
+
+                <div class="noise-box">
+                    <label>Interferencia Óptica (Ruido)</label>
+                    <input type="range" id="opt-noise" min="0" max="1" step="0.01" value="0.05" oninput="updateSystem()">
+                </div>
+            </div>
+
+            <!-- PANEL RX -->
+            <div class="card rx-card">
+                <div class="card-header">RECEPCIÓN Y CONTROL (RX)</div>
+                
+                <div class="fan-container">
+                    <div class="fan-motor" id="fan-motor">
+                        <svg class="fan-blades" viewBox="0 0 100 100">
+                            <path fill="#2c3e50" d="M50 50 L50 5 A20 20 0 0 1 90 5 L50 50 Z" />
+                            <path fill="#2c3e50" d="M50 50 L95 50 A20 20 0 0 1 95 90 L50 50 Z" />
+                            <path fill="#2c3e50" d="M50 50 L50 95 A20 20 0 0 1 10 95 L50 50 Z" />
+                            <path fill="#2c3e50" d="M50 50 L5 50 A20 20 0 0 1 5 10 L50 50 Z" />
+                            <circle fill="#34495e" cx="50" cy="50" r="10" />
+                        </svg>
+                    </div>
+                    <div class="fan-label">EXTRACTOR: <span id="fan-power">0%</span></div>
+                </div>
+
+                <div class="led-strip">
+                    <div class="led-indicator" id="led-blue">AZUL</div>
+                    <div class="led-indicator" id="led-green">VERDE</div>
+                    <div class="led-indicator" id="led-red">ROJO</div>
+                </div>
+
+                <div class="recovery-meter">
+                    <div class="m-label">V_RECUPERADO (POST-FILTRO)</div>
+                    <div class="m-value" id="val-vrec">2.75 V</div>
+                    <div class="m-bar"><div id="bar-vrec" class="m-fill"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- INSTRUMENTACIÓN Y ANÁLISIS -->
+        <div class="bottom-layout">
+            <!-- ANÁLISIS DE TELEMETRÍA (ESTÁTICO) -->
+            <div class="analysis-panel">
+                <h3 class="panel-title-dark">Análisis de la Cadena</h3>
+                <div class="analysis-content">
+                    <div class="analysis-item">
+                        <b>1. Captura:</b> Promedio de sensores convertido a 0.1V/°C.
+                    </div>
+                    <div class="analysis-item">
+                        <b>2. TX PWM:</b> Modulación del nivel DC contra la rampa de 100Hz.
+                    </div>
+                    <div class="analysis-item">
+                        <b>3. Enlace IR:</b> Transmisión óptica binaria (encendido/apagado).
+                    </div>
+                    <div class="analysis-item">
+                        <b>4. RX Filtro:</b> El filtro Sallen-Key recupera el nivel DC original.
+                    </div>
+                    <div class="analysis-item">
+                        <b>5. Control:</b> Comparadores de ventana activan la carga final.
+                    </div>
+                </div>
+            </div>
+
+            <!-- OSCILOSCOPIO -->
+            <div class="scope-panel">
+                <div class="scope-header">
+                    <span class="neon-text">OSCILOSCOPIO TX (PWM) vs RX (REC)</span>
+                    <button id="pause-btn" onclick="togglePause()">PAUSAR</button>
+                </div>
+                <canvas id="oscilloscope"></canvas>
+            </div>
+
+            <!-- RIGOBERTO -->
+            <div class="tutor-card">
+                <div class="tutor-header">PREGUNTA A RIGOBERTO</div>
+                <div id="chat-box" class="chat-area">
+                    <p>Hola, pregúntame sobre cualquier parte técnica del sistema.</p>
+                </div>
+                <div class="chat-input-row">
+                    <input type="text" id="user-input" placeholder="Tu duda técnica...">
+                    <button onclick="askRigoberto()">&#10148;</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
