@@ -1,0 +1,13 @@
+# Scripts de automatización
+upload_to_github.py
+deploy_to_vercel.py
+vercel_pro_deploy.py
+repo_config.json
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Otros
+node_modules/
+.env
